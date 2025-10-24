@@ -221,6 +221,14 @@ define(["N/record", "N/log", "N/search", "N/file"], function (
 
       // --- EXPENSE LINE MATCHING & CLEANUP ---
 
+      function normalizeMatchValue(value) {
+        if (value === null || value === undefined) {
+          return "";
+        }
+        var normalized = String(value).trim().toLowerCase();
+        return normalized.replace(/\s+/g, " ");
+      }
+
       var expenseLineArray = [];
       var expenseCount = vendorBill.getLineCount({ sublistId: "expense" });
       var rows =
@@ -319,12 +327,80 @@ define(["N/record", "N/log", "N/search", "N/file"], function (
 
       // Check for items
       var matchedLines = {};
+      // Track row status to delay validation until both matching passes finish
+      var rowMatchStatus = {};
+      var unmatchedRows = [];
+      var unmatchedRowsByDescription = {};
+      var unmatchedRowsByProductCode = {};
+      // Track product code usage per item line so duplicates can be skipped for custom handling later
+      var itemLineCount = vendorBill.getLineCount({
+        sublistId: "item",
+      });
+      var productCodeUsage = {};
+      var itemLineProductCodes = {};
+      var skippedDuplicateLines = [];
+
+      for (
+        var itemLineIndex = 0;
+        itemLineIndex < itemLineCount;
+        itemLineIndex++
+      ) {
+        var perLineCodes = [];
+        var seenCodes = {};
+
+        var lineProductCode = vendorBill.getSublistValue({
+          sublistId: "item",
+          fieldId: "vendorname",
+          line: itemLineIndex,
+        });
+
+        var lineAvaItem = vendorBill.getSublistValue({
+          sublistId: "item",
+          fieldId: "custcol_ava_item",
+          line: itemLineIndex,
+        });
+
+        var lineItemCode = vendorBill.getSublistValue({
+          sublistId: "item",
+          fieldId: "custcol_itemcode",
+          line: itemLineIndex,
+        });
+
+        var codeCandidates = [lineProductCode, lineAvaItem, lineItemCode];
+        for (var codeIdx = 0; codeIdx < codeCandidates.length; codeIdx++) {
+          var codeCandidate = codeCandidates[codeIdx];
+          if (codeCandidate === null || codeCandidate === undefined) {
+            continue;
+          }
+
+          var normalizedCandidate = String(codeCandidate).trim();
+          if (!normalizedCandidate) {
+            continue;
+          }
+
+          normalizedCandidate = normalizedCandidate.toLowerCase();
+          if (seenCodes[normalizedCandidate]) {
+            continue;
+          }
+
+          seenCodes[normalizedCandidate] = true;
+          perLineCodes.push(normalizedCandidate);
+          productCodeUsage[normalizedCandidate] =
+            (productCodeUsage[normalizedCandidate] || 0) + 1;
+        }
+
+        if (perLineCodes.length) {
+          itemLineProductCodes[itemLineIndex] = perLineCodes;
+        }
+      }
+
       for (
         var rowIndex = 0;
         rowIndex < request.lineItems.rows.length;
         rowIndex++
       ) {
         var row = request.lineItems.rows[rowIndex];
+        rowMatchStatus[rowIndex] = false;
         if (
           (!row.productCode || !row.productCode.value) &&
           (!row.description || !row.description.value)
@@ -345,14 +421,16 @@ define(["N/record", "N/log", "N/search", "N/file"], function (
 
         var productCode = "";
         if (row && row.productCode && row.productCode.value) {
-          productCode = row.productCode.value;
+          productCode = String(row.productCode.value).trim();
         } else if (row && row.code && row.code.value) {
-          productCode = row.code.value;
+          productCode = String(row.code.value).trim();
         }
         var description =
           row && row.description && row.description.value
-            ? row.description.value
+            ? String(row.description.value).trim()
             : "";
+        var descriptionNormalized = normalizeMatchValue(description);
+        var productCodeNormalized = normalizeMatchValue(productCode);
         var qty = row && row.qty && row.qty.value ? row.qty.value : null;
         var lineCount = vendorBill.getLineCount({
           sublistId: "item",
@@ -426,26 +504,62 @@ define(["N/record", "N/log", "N/search", "N/file"], function (
             details: "Line " + i + ": " + itemDescription,
           });
 
+          var normalizedItemProductCode = normalizeMatchValue(itemProductCode);
+          var normalizedItemAvaItem = normalizeMatchValue(itemAvaItem);
+          var normalizedItemItemCode = normalizeMatchValue(itemItemCode);
+          var normalizedItemDescription = normalizeMatchValue(itemDescription);
+          var normalizedItemSalesDescription = normalizeMatchValue(
+            itemSalesDescription
+          );
+
+          var duplicateCodesForLine = itemLineProductCodes[i] || [];
+          var skipDueToDuplicateProductCode = false;
+
+          for (
+            var duplicateIdx = 0;
+            duplicateIdx < duplicateCodesForLine.length;
+            duplicateIdx++
+          ) {
+            var duplicateCodeKey = duplicateCodesForLine[duplicateIdx];
+            if (productCodeUsage[duplicateCodeKey] > 1) {
+              skipDueToDuplicateProductCode = true;
+              break;
+            }
+          }
+
+          if (skipDueToDuplicateProductCode) {
+            // Skip lines with repeated product codes; custom logic will process them separately
+            log.debug({
+              title: "Skipping item line with non-unique product code",
+              details: "Line " + (i + 1),
+            });
+            if (skippedDuplicateLines.indexOf(i) === -1) {
+              skippedDuplicateLines.push(i);
+            }
+            continue;
+          }
+
           var isMatch =
-            (productCode &&
-              itemProductCode &&
-              itemProductCode.toLowerCase() === productCode.toLowerCase()) ||
-            (description &&
-              itemDescription &&
-              itemDescription.toLowerCase() === description.toLowerCase()) ||
-            (productCode &&
-              itemAvaItem &&
-              productCode.toLowerCase() === itemAvaItem.toLowerCase()) ||
-            (productCode &&
-              itemItemCode &&
-              productCode.toLowerCase() === itemItemCode.toLowerCase()) ||
-            (description &&
-              itemSalesDescription &&
-              itemSalesDescription.toLowerCase() === description.toLowerCase());
+            (productCodeNormalized &&
+              normalizedItemProductCode &&
+              normalizedItemProductCode === productCodeNormalized) ||
+            (descriptionNormalized &&
+              normalizedItemDescription &&
+              normalizedItemDescription === descriptionNormalized) ||
+            (productCodeNormalized &&
+              normalizedItemAvaItem &&
+              productCodeNormalized === normalizedItemAvaItem) ||
+            (productCodeNormalized &&
+              normalizedItemItemCode &&
+              productCodeNormalized === normalizedItemItemCode) ||
+            (descriptionNormalized &&
+              normalizedItemSalesDescription &&
+              normalizedItemSalesDescription === descriptionNormalized);
 
           if (isMatch) {
             matchFound = true;
             matchedLines[i] = true;
+            rowMatchStatus[rowIndex] = true;
 
             try {
               vendorBill.selectLine({
@@ -490,13 +604,285 @@ define(["N/record", "N/log", "N/search", "N/file"], function (
           }
         }
 
-        if (!matchFound && !row.skip && !expenseLineArray.length) {
+        if (!matchFound) {
+          var shouldRaiseError = !row.skip && !expenseLineArray.length;
+          var unmatchedEntry = {
+            rowIndex: rowIndex,
+            descriptionLower: descriptionNormalized,
+            rawDescription: description,
+            productCodeLower: productCodeNormalized,
+            rawProductCode: productCode,
+            qty: qty,
+            shouldError: shouldRaiseError,
+            matched: false,
+          };
+          unmatchedRows.push(unmatchedEntry);
+
+          if (unmatchedEntry.descriptionLower) {
+            if (!unmatchedRowsByDescription[unmatchedEntry.descriptionLower]) {
+              unmatchedRowsByDescription[unmatchedEntry.descriptionLower] = [];
+            }
+            unmatchedRowsByDescription[unmatchedEntry.descriptionLower].push(
+              unmatchedEntry
+            );
+          }
+          if (unmatchedEntry.productCodeLower) {
+            if (!unmatchedRowsByProductCode[unmatchedEntry.productCodeLower]) {
+              unmatchedRowsByProductCode[unmatchedEntry.productCodeLower] = [];
+            }
+            unmatchedRowsByProductCode[unmatchedEntry.productCodeLower].push(
+              unmatchedEntry
+            );
+          }
+        } else {
+          rowMatchStatus[rowIndex] = true;
+        }
+      }
+
+      if (
+        skippedDuplicateLines.length > 0 &&
+        request.originalItems &&
+        Array.isArray(request.originalItems.rows) &&
+        request.originalItems.rows.length > 0
+      ) {
+        // Second pass: reuse originalItems to try matching duplicate lines by descriptions
+        var originalRows = request.originalItems.rows;
+        var duplicateMatchedLines = {};
+
+        for (
+          var originalRowIndex = 0;
+          originalRowIndex < originalRows.length;
+          originalRowIndex++
+        ) {
+          var originalRow = originalRows[originalRowIndex];
+          if (!originalRow) {
+            continue;
+          }
+
+          var originalDescription =
+            originalRow.description &&
+            originalRow.description.value &&
+            String(originalRow.description.value).trim()
+              ? String(originalRow.description.value).trim()
+              : "";
+
+          var originalDescriptionLower = normalizeMatchValue(
+            originalDescription
+          );
+
+          if (!originalDescriptionLower) {
+            continue;
+          }
+
+          var originalProductCode = "";
+          if (
+            originalRow &&
+            originalRow.productCode &&
+            originalRow.productCode.value
+          ) {
+            originalProductCode = String(
+              originalRow.productCode.value
+            ).trim();
+          } else if (originalRow && originalRow.code && originalRow.code.value) {
+            originalProductCode = String(originalRow.code.value).trim();
+          }
+          var originalProductCodeLower = normalizeMatchValue(
+            originalProductCode
+          );
+
+          var originalQty =
+            originalRow.qty && originalRow.qty.value
+              ? originalRow.qty.value
+              : null;
+
+          for (
+            var skippedIdx = 0;
+            skippedIdx < skippedDuplicateLines.length;
+            skippedIdx++
+          ) {
+            var skippedLineIndex = skippedDuplicateLines[skippedIdx];
+            if (duplicateMatchedLines[skippedLineIndex]) {
+              continue;
+            }
+
+            var skippedItemDescription = vendorBill.getSublistValue({
+              sublistId: "item",
+              fieldId: "description",
+              line: skippedLineIndex,
+            });
+
+            var skippedItemSalesDescription = vendorBill.getSublistValue({
+              sublistId: "item",
+              fieldId: "custcol_sk_sales_description",
+              line: skippedLineIndex,
+            });
+
+            // Allow partial description matches in both directions to cover similar wording
+            var itemDescriptionLower = normalizeMatchValue(
+              skippedItemDescription
+            );
+            var itemSalesDescriptionLower = normalizeMatchValue(
+              skippedItemSalesDescription
+            );
+            var descriptionMatch = false;
+
+            log.debug({
+              title: "itemDescriptionLower",
+              details: itemDescriptionLower,
+            });
+
+            log.debug({
+              title: "originalDescriptionLower",
+              details: originalDescriptionLower,
+            });
+            if (itemDescriptionLower) {
+              descriptionMatch =
+                itemDescriptionLower.indexOf(originalDescriptionLower) !== -1 ||
+                originalDescriptionLower.indexOf(itemDescriptionLower) !== -1;
+            }
+            if (!descriptionMatch && itemSalesDescriptionLower) {
+              descriptionMatch =
+                itemSalesDescriptionLower.indexOf(originalDescriptionLower) !==
+                  -1 ||
+                originalDescriptionLower.indexOf(itemSalesDescriptionLower) !==
+                  -1;
+            }
+            if (!descriptionMatch) {
+              continue;
+            }
+
+            ////
+            var unmatchedCandidates =
+              unmatchedRowsByDescription[originalDescriptionLower];
+            if (
+              (!unmatchedCandidates || !unmatchedCandidates.length) &&
+              originalProductCodeLower
+            ) {
+              unmatchedCandidates =
+                unmatchedRowsByProductCode[originalProductCodeLower];
+            }
+            if (!unmatchedCandidates || !unmatchedCandidates.length) {
+              unmatchedCandidates = [];
+              for (
+                var fallbackIdx = 0;
+                fallbackIdx < unmatchedRows.length;
+                fallbackIdx++
+              ) {
+                var fallbackEntry = unmatchedRows[fallbackIdx];
+                if (
+                  fallbackEntry.matched ||
+                  !fallbackEntry.descriptionLower
+                ) {
+                  continue;
+                }
+                var fallbackDescription = fallbackEntry.descriptionLower;
+                if (
+                  fallbackDescription.indexOf(originalDescriptionLower) !==
+                    -1 ||
+                  originalDescriptionLower.indexOf(fallbackDescription) !== -1
+                ) {
+                  unmatchedCandidates.push(fallbackEntry);
+                }
+              }
+            }
+
+            if (!unmatchedCandidates.length) {
+              continue;
+            }
+
+            var matchedUnmatchedEntry = null;
+
+            for (
+              var candidateIdx = 0;
+              candidateIdx < unmatchedCandidates.length;
+              candidateIdx++
+            ) {
+              if (!unmatchedCandidates[candidateIdx].matched) {
+                matchedUnmatchedEntry = unmatchedCandidates[candidateIdx];
+                break;
+              }
+            }
+
+            if (!matchedUnmatchedEntry) {
+              continue;
+            }
+
+            try {
+              vendorBill.selectLine({
+                sublistId: "item",
+                line: skippedLineIndex,
+              });
+
+              if (originalQty !== null && originalQty !== undefined) {
+                vendorBill.setCurrentSublistValue({
+                  sublistId: "item",
+                  fieldId: "quantity",
+                  value: originalQty,
+                });
+              }
+
+              vendorBill.commitLine({
+                sublistId: "item",
+              });
+
+              matchedLines[skippedLineIndex] = true;
+              duplicateMatchedLines[skippedLineIndex] = true;
+              matchedUnmatchedEntry.matched = true;
+              rowMatchStatus[matchedUnmatchedEntry.rowIndex] = true;
+
+              log.debug({
+                title: "Matched duplicate line by description",
+                details:
+                  "Line " +
+                  (skippedLineIndex + 1) +
+                  " matched with originalItems row " +
+                  (originalRowIndex + 1),
+              });
+
+              break;
+            } catch (originalMatchError) {
+              log.error({
+                title:
+                  "Error processing duplicate item line " + skippedLineIndex,
+                details: originalMatchError,
+              });
+              return {
+                error:
+                  "Error processing duplicate item line " +
+                  (skippedLineIndex + 1) +
+                  ".",
+              };
+            }
+          }
+        }
+      }
+      // Validate after both passes; error only if rows marked critical remain unmatched
+      if (unmatchedRows.length > 0) {
+        var unresolvedEntry = null;
+        for (
+          var unresolvedIdx = 0;
+          unresolvedIdx < unmatchedRows.length;
+          unresolvedIdx++
+        ) {
+          var entry = unmatchedRows[unresolvedIdx];
+          if (entry.shouldError && !entry.matched) {
+            unresolvedEntry = entry;
+            break;
+          }
+        }
+
+        if (unresolvedEntry) {
           log.error({
             title: "No Matching Item Found",
-            details: "No matching item found in Vendor Bill",
+            details:
+              "No matching item found in Vendor Bill for request line index " +
+              unresolvedEntry.rowIndex,
           });
           return {
-            error: "No matching item found for product code in Vendor Bill.",
+            error:
+              "No matching item found for request line " +
+              (unresolvedEntry.rowIndex + 1) +
+              " in Vendor Bill.",
           };
         }
       }
