@@ -93,10 +93,19 @@ define(["N/record", "N/log"], function (recordModule, log) {
       });
 
       if (request.tranDate) {
-        var dateObj = new Date(request.tranDate); // e.g. "2018-04-12"
+        var parts = request.tranDate.split("-"); // ["2025","11","23"]
+        if (parts.length !== 3) {
+          return { error: "Invalid tranDate format. Expected YYYY-MM-DD" };
+        }
+
+        var dateObj = new Date(
+          parseInt(parts[0], 10),
+          parseInt(parts[1], 10) - 1,
+          parseInt(parts[2], 10)
+        );
 
         if (isNaN(dateObj.getTime())) {
-          return { error: "Invalid tranDate format. Expected YYYY-MM-DD" };
+          return { error: "Invalid tranDate after parsing" };
         }
 
         expRec.setValue({
@@ -160,16 +169,22 @@ define(["N/record", "N/log"], function (recordModule, log) {
           });
         }
 
-        // --- Custom Segments
-        Object.keys(line).forEach(function (key) {
-          if (key.startsWith("cseg") && line[key].id) {
-            expRec.setCurrentSublistValue({
-              sublistId: "expense",
-              fieldId: key.toLowerCase(),
-              value: line[key].id,
-            });
-          }
-        });
+        // Custom Segments
+        if (line.cseg1 && line.cseg1.id) {
+          expRec.setCurrentSublistValue({
+            sublistId: "expense",
+            fieldId: "cseg1",
+            value: line.cseg1.id,
+          });
+        }
+
+        if (line.cseg_jcs_spcfcf && line.cseg_jcs_spcfcf.id) {
+          expRec.setCurrentSublistValue({
+            sublistId: "expense",
+            fieldId: "cseg_jcs_spcfcf",
+            value: line.cseg_jcs_spcfcf.id,
+          });
+        }
 
         if (line.amount) {
           expRec.setCurrentSublistValue({
