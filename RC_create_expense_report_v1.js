@@ -93,9 +93,15 @@ define(["N/record", "N/log"], function (recordModule, log) {
       });
 
       if (request.tranDate) {
+        var dateObj = new Date(request.tranDate); // e.g. "2018-04-12"
+
+        if (isNaN(dateObj.getTime())) {
+          return { error: "Invalid tranDate format. Expected YYYY-MM-DD" };
+        }
+
         expRec.setValue({
           fieldId: "trandate",
-          value: request.tranDate,
+          value: dateObj,
         });
       }
 
