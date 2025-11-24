@@ -1,0 +1,210 @@
+/**
+ * @param {Object} request
+ * @param {Object} request.entity — employee
+ * @param {string} request.tranDate — date
+ * @param {string} request.memo — header memo
+ * @param {Array} request.expense.items — expense lines
+ *
+ * @NApiVersion 2.x
+ * @NScriptType Restlet
+ * @NModuleScope Public
+ */
+
+define(["N/record", "N/log"], function (recordModule, log) {
+  function post(request) {
+    if (!request.function) {
+      return { error: "No function specified" };
+    }
+
+    switch (request.function) {
+      case "createExpenseReport":
+        return createExpenseReport(request);
+      default:
+        return { error: "Unknown function" };
+    }
+  }
+
+  function convertRecordToObject(rec) {
+    var out = {};
+
+    // fields
+    rec.getFields().forEach(function (fieldId) {
+      try {
+        out[fieldId] = rec.getValue({ fieldId: fieldId });
+      } catch (e) {
+        // ignore non-readable fields
+      }
+    });
+
+    // sublists
+    rec.getSublists().forEach(function (sublistId) {
+      var lineCount = rec.getLineCount({ sublistId: sublistId });
+      out[sublistId] = [];
+
+      for (var i = 0; i < lineCount; i++) {
+        var lineObj = {};
+        var fields = rec.getSublistFields({ sublistId: sublistId });
+
+        fields.forEach(function (fieldId) {
+          try {
+            lineObj[fieldId] = rec.getSublistValue({
+              sublistId: sublistId,
+              fieldId: fieldId,
+              line: i,
+            });
+          } catch (e) {
+            // field not accessible — skip
+          }
+        });
+
+        out[sublistId].push(lineObj);
+      }
+    });
+
+    return out;
+  }
+
+  function createExpenseReport(request) {
+    try {
+      log.debug("Incoming payload", JSON.stringify(request));
+
+      if (!request.entity || !request.entity.id) {
+        return { error: "entity.id is required" };
+      }
+
+      if (
+        !request.expense ||
+        !request.expense.items ||
+        !Array.isArray(request.expense.items)
+      ) {
+        return { error: "expense.items array is required" };
+      }
+
+      // Create Expense Report
+      var expRec = recordModule.create({
+        type: recordModule.Type.EXPENSE_REPORT,
+        isDynamic: true,
+      });
+
+      // HEADER FIELDS
+      expRec.setValue({
+        fieldId: "entity",
+        value: request.entity.id,
+      });
+
+      if (request.tranDate) {
+        expRec.setValue({
+          fieldId: "trandate",
+          value: request.tranDate,
+        });
+      }
+
+      if (request.memo) {
+        expRec.setValue({
+          fieldId: "memo",
+          value: request.memo,
+        });
+      }
+
+      // SUBLIST LINES
+      var items = request.expense.items;
+
+      for (var i = 0; i < items.length; i++) {
+        var line = items[i];
+
+        expRec.selectNewLine({ sublistId: "expense" });
+
+        if (line.category && line.category.id) {
+          expRec.setCurrentSublistValue({
+            sublistId: "expense",
+            fieldId: "category",
+            value: line.category.id,
+          });
+        }
+
+        if (line.account && line.account.id) {
+          expRec.setCurrentSublistValue({
+            sublistId: "expense",
+            fieldId: "account",
+            value: line.account.id,
+          });
+        }
+
+        if (line.taxCode && line.taxCode.id) {
+          expRec.setCurrentSublistValue({
+            sublistId: "expense",
+            fieldId: "taxcode",
+            value: line.taxCode.id,
+          });
+        }
+
+        if (line.memo) {
+          expRec.setCurrentSublistValue({
+            sublistId: "expense",
+            fieldId: "memo",
+            value: line.memo,
+          });
+        }
+
+        if (line.class && line.class.id) {
+          expRec.setCurrentSublistValue({
+            sublistId: "expense",
+            fieldId: "class",
+            value: line.class.id,
+          });
+        }
+
+        // --- Custom Segments
+        Object.keys(line).forEach(function (key) {
+          if (key.startsWith("cseg") && line[key].id) {
+            expRec.setCurrentSublistValue({
+              sublistId: "expense",
+              fieldId: key.toLowerCase(),
+              value: line[key].id,
+            });
+          }
+        });
+
+        if (line.amount) {
+          expRec.setCurrentSublistValue({
+            sublistId: "expense",
+            fieldId: "amount",
+            value: line.amount,
+          });
+        }
+
+        expRec.commitLine({ sublistId: "expense" });
+      }
+
+      var expenseReportId = expRec.save({
+        enableSourcing: true,
+        ignoreMandatoryFields: false,
+      });
+
+      log.debug("Expense Report created", expenseReportId);
+
+      // ---- Load full record
+      var loaded = recordModule.load({
+        type: recordModule.Type.EXPENSE_REPORT,
+        id: expenseReportId,
+        isDynamic: false,
+      });
+
+      // ---- Convert record to plain JS object
+      var result = convertRecordToObject(loaded);
+
+      return {
+        success: true,
+        expenseReportId: expenseReportId,
+        record: result,
+      };
+    } catch (e) {
+      log.error("Error creating Expense Report", e);
+      return { error: e.toString() };
+    }
+  }
+
+  return {
+    post: post,
+  };
+});
