@@ -121,6 +121,18 @@ define(["N/record", "N/log"], function (recordModule, log) {
         });
       }
 
+      if (request.expensereportcurrency && request.expensereportcurrency.id) {
+        expRec.setValue({
+          fieldId: "expensereportcurrency",
+          value: request.expensereportcurrency.id,
+        });
+      } else {
+        expRec.setValue({
+          fieldId: "expensereportcurrency",
+          value: 1,
+        });
+      }
+
       // SUBLIST LINES
       var items = request.expense.items;
 
@@ -129,11 +141,19 @@ define(["N/record", "N/log"], function (recordModule, log) {
 
         expRec.selectNewLine({ sublistId: "expense" });
 
-        if (line.category && line.category.id) {
+        // if (line.category && line.category.id) {
+        //   expRec.setCurrentSublistValue({
+        //     sublistId: "expense",
+        //     fieldId: "category",
+        //     value: line.category.id,
+        //   });
+        // }
+
+        if (line.expenseaccount && line.expenseaccount.id) {
           expRec.setCurrentSublistValue({
             sublistId: "expense",
-            fieldId: "category",
-            value: line.category.id,
+            fieldId: "expenseaccount",
+            value: line.expenseaccount.id,
           });
         }
 
@@ -150,6 +170,14 @@ define(["N/record", "N/log"], function (recordModule, log) {
             sublistId: "expense",
             fieldId: "taxcode",
             value: line.taxCode.id,
+          });
+        }
+
+        if (line.currency && line.currency.id) {
+          expRec.setCurrentSublistValue({
+            sublistId: "expense",
+            fieldId: "currency",
+            value: line.currency.id,
           });
         }
 
