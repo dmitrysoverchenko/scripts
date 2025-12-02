@@ -133,6 +133,142 @@ define(["N/record", "N/log"], function (recordModule, log) {
         });
       }
 
+      // subsidiary
+      if (request.subsidiary && request.subsidiary.id) {
+        expRec.setValue({
+          fieldId: "subsidiary",
+          value: request.subsidiary.id,
+        });
+      }
+
+      // Corporate Card by Default (checkbox expects boolean)
+      if (request.corpcardbydefault !== undefined) {
+        expRec.setValue({
+          fieldId: "corpcardbydefault",
+          value:
+            request.corpcardbydefault === "true" ||
+            request.corpcardbydefault === true,
+        });
+      }
+
+      // category
+      if (request.category && request.category.id) {
+        expRec.setValue({
+          fieldId: "category",
+          value: request.category.id,
+        });
+      }
+
+      // cseg1
+      if (request.cseg1 && request.cseg1.id) {
+        expRec.setValue({
+          fieldId: "cseg1",
+          value: request.cseg1.id,
+        });
+      }
+
+      // cseg_jcs_spcfcf
+      if (request.cseg_jcs_spcfcf && request.cseg_jcs_spcfcf.id) {
+        expRec.setValue({
+          fieldId: "cseg_jcs_spcfcf",
+          value: request.cseg_jcs_spcfcf.id,
+        });
+      }
+
+      // class
+      if (request.class && request.class.id) {
+        expRec.setValue({
+          fieldId: "class",
+          value: request.class.id,
+        });
+      }
+
+      // department
+      if (request.department && request.department.id) {
+        expRec.setValue({
+          fieldId: "department",
+          value: request.department.id,
+        });
+      }
+
+      // csegcseg_jcs_evtprg
+      if (request.csegcseg_jcs_evtprg && request.csegcseg_jcs_evtprg.id) {
+        expRec.setValue({
+          fieldId: "csegcseg_jcs_evtprg",
+          value: request.csegcseg_jcs_evtprg.id,
+        });
+      }
+
+      // Budget Owner
+      if (
+        request.custbody_jcs_budgetowner &&
+        request.custbody_jcs_budgetowner.id
+      ) {
+        expRec.setValue({
+          fieldId: "custbody_jcs_budgetowner",
+          value: request.custbody_jcs_budgetowner.id,
+        });
+      }
+
+      // Budget Category (text)
+      if (request.budgetCategory) {
+        expRec.setValue({
+          fieldId: "custbody_jcs_budgetcategory",
+          value: request.budgetCategory,
+        });
+      }
+
+      // IT Endorse
+      if (
+        request.custbody_jcs_it_endorse_employee &&
+        request.custbody_jcs_it_endorse_employee.id
+      ) {
+        expRec.setValue({
+          fieldId: "custbody_jcs_it_endorse_employee",
+          value: request.custbody_jcs_it_endorse_employee.id,
+        });
+      }
+
+      // Facility Service Endorse
+      if (
+        request.custbody_jcs_fs_endorse_employee &&
+        request.custbody_jcs_fs_endorse_employee.id
+      ) {
+        expRec.setValue({
+          fieldId: "custbody_jcs_fs_endorse_employee",
+          value: request.custbody_jcs_fs_endorse_employee.id,
+        });
+      }
+
+      // Approvers
+      if (
+        request.custbody_jcs_level1_approver &&
+        request.custbody_jcs_level1_approver.id
+      ) {
+        expRec.setValue({
+          fieldId: "custbody_jcs_level1_approver",
+          value: request.custbody_jcs_level1_approver.id,
+        });
+      }
+
+      if (
+        request.custbody_jcs_level2_approver &&
+        request.custbody_jcs_level2_approver.id
+      ) {
+        expRec.setValue({
+          fieldId: "custbody_jcs_level2_approver",
+          value: request.custbody_jcs_level2_approver.id,
+        });
+      }
+
+      // Exchange Rate
+      if (request.expensereportexchangerate) {
+        expRec.setValue({
+          fieldId: "expensereportexchangerate",
+          value: request.expensereportexchangerate,
+        });
+      }
+
       // SUBLIST LINES
       var items = request.expense.items;
 
