@@ -134,22 +134,22 @@ define(["N/record", "N/log"], function (recordModule, log) {
       }
 
       // subsidiary
-      if (request.subsidiary && request.subsidiary.id) {
-        expRec.setValue({
-          fieldId: "subsidiary",
-          value: request.subsidiary.id,
-        });
-      }
+      // if (request.subsidiary && request.subsidiary.id) {
+      //   expRec.setValue({
+      //     fieldId: "subsidiary",
+      //     value: request.subsidiary.id,
+      //   });
+      // }
 
       // Corporate Card by Default (checkbox expects boolean)
-      if (request.corpcardbydefault !== undefined) {
-        expRec.setValue({
-          fieldId: "corpcardbydefault",
-          value:
-            request.corpcardbydefault === "true" ||
-            request.corpcardbydefault === true,
-        });
-      }
+      // if (request.corpcardbydefault !== undefined) {
+      //   expRec.setValue({
+      //     fieldId: "corpcardbydefault",
+      //     value:
+      //       request.corpcardbydefault === "true" ||
+      //       request.corpcardbydefault === true,
+      //   });
+      // }
 
       // category
       if (request.category && request.category.id) {
@@ -176,20 +176,20 @@ define(["N/record", "N/log"], function (recordModule, log) {
       }
 
       // class
-      if (request.class && request.class.id) {
-        expRec.setValue({
-          fieldId: "class",
-          value: request.class.id,
-        });
-      }
+      // if (request.class && request.class.id) {
+      //   expRec.setValue({
+      //     fieldId: "class",
+      //     value: request.class.id,
+      //   });
+      // }
 
       // department
-      if (request.department && request.department.id) {
-        expRec.setValue({
-          fieldId: "department",
-          value: request.department.id,
-        });
-      }
+      // if (request.department && request.department.id) {
+      //   expRec.setValue({
+      //     fieldId: "department",
+      //     value: request.department.id,
+      //   });
+      // }
 
       // csegcseg_jcs_evtprg
       if (request.csegcseg_jcs_evtprg && request.csegcseg_jcs_evtprg.id) {
@@ -285,6 +285,29 @@ define(["N/record", "N/log"], function (recordModule, log) {
         //   });
         // }
 
+        if (line.expensedate) {
+          var lineParts = line.expensedate.split("-"); // ["2025","11","23"]
+          if (lineParts.length !== 3) {
+            return { error: "Invalid tranDate format. Expected YYYY-MM-DD" };
+          }
+
+          var dateLineObj = new Date(
+            parseInt(lineParts[0], 10),
+            parseInt(lineParts[1], 10) - 1,
+            parseInt(lineParts[2], 10)
+          );
+
+          if (isNaN(dateLineObj.getTime())) {
+            return { error: "Invalid tranDate after parsing" };
+          }
+
+          expRec.setCurrentSublistValue({
+            sublistId: "expense",
+            fieldId: "expensedate",
+            value: dateLineObj,
+          });
+        }
+
         if (line.expenseaccount && line.expenseaccount.id) {
           expRec.setCurrentSublistValue({
             sublistId: "expense",
@@ -293,11 +316,11 @@ define(["N/record", "N/log"], function (recordModule, log) {
           });
         }
 
-        if (line.account && line.account.id) {
+        if (line.department && line.department.id) {
           expRec.setCurrentSublistValue({
             sublistId: "expense",
-            fieldId: "account",
-            value: line.account.id,
+            fieldId: "department",
+            value: line.department.id,
           });
         }
 
