@@ -10,7 +10,7 @@
  * @NModuleScope Public
  */
 
-define(["N/record", "N/log"], function (recordModule, log) {
+define(["N/record", "N/log", 'N/file'], function (recordModule, log, file) {
   function post(request) {
     if (!request.function) {
       return { error: "No function specified" };
@@ -19,6 +19,8 @@ define(["N/record", "N/log"], function (recordModule, log) {
     switch (request.function) {
       case "createExpenseReport":
         return createExpenseReport(request);
+      case "fileCreate":
+        return fileCreate(request);
       default:
         return { error: "Unknown function" };
     }
@@ -373,6 +375,14 @@ define(["N/record", "N/log"], function (recordModule, log) {
           });
         }
 
+        if (line.csegcseg_jcs_evtprg && line.csegcseg_jcs_evtprg.id) {
+          expRec.setCurrentSublistValue({
+            sublistId: "expense",
+            fieldId: "csegcseg_jcs_evtprg",
+            value: line.csegcseg_jcs_evtprg.id,
+          });
+        }
+
         if (line.amount) {
           expRec.setCurrentSublistValue({
             sublistId: "expense",
@@ -409,6 +419,89 @@ define(["N/record", "N/log"], function (recordModule, log) {
     } catch (e) {
       log.error("Error creating Expense Report", e);
       return { error: e.toString() };
+    }
+  }
+
+  function fileCreate(request) {
+    if (typeof request.name === "undefined") {
+      return { error: "No name was specified." };
+    }
+    if (typeof request.fileType === "undefined") {
+      return { error: "No fileType was specified." };
+    }
+    if (typeof request.contents === "undefined") {
+      return { error: "No content was specified." };
+    }
+    if (typeof request.description === "undefined") {
+      return { error: "No description was specified." };
+    }
+    if (typeof request.encoding === "undefined") {
+      return { error: "No encoding was specified." };
+    }
+    if (typeof request.folderID === "undefined") {
+      return { error: "No folderID was specified." };
+    }
+    if (typeof request.isOnline === "undefined") {
+      return { error: "No isOnline was specified." };
+    }
+    if (!request.recordId) {
+      return { error: "Record id is required." };
+    }
+    if (!request.recordType) {
+      return { error: "Record type is required." };
+    }
+
+    try {
+      var fileObj = file.create({
+        name: request.name,
+        fileType: request.fileType,
+        contents: request.contents,
+        description: request.description,
+        encoding: request.encoding,
+        folder: request.folderID,
+        isOnline: request.isOnline,
+      });
+
+      var fileID = fileObj.save();
+
+      log.debug("Created file ID", fileID);
+
+      fileObj = file.load({ id: fileID });
+
+      var expRecord = recordModule.load({
+        type: recordModule.Type.EXPENSE_REPORT,
+        id: request.recordId,
+        isDynamic: false,
+      });
+
+      var lineCount = expRecord.getLineCount({ sublistId: "expense" });
+
+      for (var i = 0; i < lineCount; i++) {
+        expRecord.setSublistValue({
+          sublistId: "expense",
+          fieldId: "custcol_2663_eft_file_format",
+          line: i,
+          value: fileID,
+        });
+      }
+
+      expRecord.save({ enableSourcing: false, ignoreMandatoryFields: true });
+
+      var response = {};
+      response["info"] = fileObj;
+      response["content"] = fileObj.getContents();
+      response["fileID"] = fileID;
+
+      return response;
+    } catch (e) {
+      log.error({
+        title: "Attach creating error.",
+        details: e,
+      });
+      return {
+        error: "Attach creating error.",
+        details: e.toString(),
+      };
     }
   }
 

@@ -1,0 +1,921 @@
+{
+  "plain": {
+    "documentTypeId": "netsuite_purchase_order",
+    "plainValues": [
+      {
+        "ruleType": "inline",
+        "resultName": "supplierName",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.entity",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.poNumber",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.tranid",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.memo",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.memo",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "invoiceDateEpoch",
+        "resultType": "decimal",
+        "defaultValue": 0,
+        "expression": "importedData.trandateepoch",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "invoiceDate",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "formatTimestamp(invoiceDateEpoch.value, 'DD/MM/YYYY')",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "invoiceTax",
+        "resultType": "decimal",
+        "defaultValue": 0,
+        "expression": "round(importedData.custbody_stc_tax_after_discount, 2)",
+        "alternativeExpression": "round(importedData.total - importedData.subtotal, 2)",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "invoiceTotal",
+        "resultType": "decimal",
+        "defaultValue": 0,
+        "expression": "round(importedData.total, 2)",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "invoiceSubtotal",
+        "resultType": "decimal",
+        "defaultValue": 0,
+        "expression": "round(importedData.subtotal, 2)",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "currencyCode",
+        "resultType": "text",
+        "defaultValue": "SGD",
+        "expression": "importedData.currency",
+        "alternativeExpression": "'SGD'",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.importDisabled",
+        "resultType": "boolean",
+        "defaultValue": false,
+        "expression": "importedData.importdisabled",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.warehouseReceiptID",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.warehousereceiptid",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.orderstatus",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.orderstatus",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.location",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.location",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.custbody_approval_worflow_progress",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.custbody_approval_worflow_progress",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      }
+    ],
+    "lineItems": {
+      "path": "items",
+      "headers": [
+        {
+          "id": "code",
+          "name": "Code",
+          "processingDescription": {
+            "expression": "code",
+            "type": "text"
+          }
+        },
+        {
+          "id": "description",
+          "name": "Description",
+          "processingDescription": {
+            "expression": "description",
+            "type": "text"
+          }
+        },
+        {
+          "id": "unitPrice",
+          "name": "Unit Price",
+          "processingDescription": {
+            "expression": "round(rate / importedData.exchangerate, 4)",
+            "alternativeExpression": "round(rate, 4)",
+            "type": "decimal"
+          }
+        },
+        {
+          "id": "qty",
+          "name": "Quantity",
+          "processingDescription": {
+            "expression": "round(quantity, 2)",
+            "type": "decimal"
+          }
+        },
+        {
+          "id": "qtyReceived",
+          "name": "Quantity Received",
+          "processingDescription": {
+            "expression": "round(quantityreceived, 2)",
+            "type": "decimal"
+          }
+        },
+        {
+          "id": "qtyBilled",
+          "name": "Quantity Billed",
+          "processingDescription": {
+            "expression": "round(quantitybilled, 2)",
+            "type": "decimal"
+          }
+        },
+        {
+          "id": "total",
+          "name": "Total",
+          "processingDescription": {
+            "expression": "round(amount, 2)",
+            "type": "decimal"
+          }
+        },
+        {
+          "id": "closed",
+          "name": "Closed",
+          "processingDescription": {
+            "expression": "isclosed",
+            "type": "text"
+          }
+        },
+        {
+          "id": "POLineComments",
+          "name": "PO Line Comments",
+          "processingDescription": {
+            "expression": "custcol_po_line_comments",
+            "type": "text"
+          }
+        }
+      ]
+    }
+  },
+  "inboundShipment": {
+    "documentTypeId": "netsuite_inbound_shipment",
+    "isPlain": true,
+    "plainValues": [
+      {
+        "ruleType": "inline",
+        "resultName": "supplierName",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.vendorid",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.poNumber",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.purchaseordertransactionnumber",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.warehouseReceiptID",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.custrecord_koala_ib_whs_receipt_id",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.orderStatus",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.shipmentstatus",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.expectedShippingDate",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.expectedshippingdate",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.shipmentNumber",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.shipmentnumber",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.actualShippingDate",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.actualshippingdate",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.expectedDeliveryDate",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.expecteddeliverydate",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.actualDeliveryDate",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.actualdeliverydate",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.containerId",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.vesselnumber",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      }
+    ],
+    "lineItems": {
+      "path": "items",
+      "headers": [
+        {
+          "id": "purchaseordertransaction",
+          "name": "PO",
+          "processingDescription": {
+            "expression": "purchaseordertransactionnumber",
+            "type": "text"
+          }
+        },
+        {
+          "id": "shipmentitemtransaction",
+          "name": "Item",
+          "processingDescription": {
+            "expression": "shipmentitemtransaction",
+            "type": "text"
+          }
+        },
+        {
+          "id": "shipmentitemdescription",
+          "name": "Description",
+          "processingDescription": {
+            "expression": "shipmentitemdescription",
+            "type": "text"
+          }
+        },
+        {
+          "id": "quantityreceived",
+          "name": "Quantity Received",
+          "processingDescription": {
+            "expression": "round(quantityreceived, 2)",
+            "type": "decimal"
+          }
+        },
+        {
+          "id": "quantitybilled",
+          "name": "Quantity Billed",
+          "processingDescription": {
+            "expression": "round(quantitybilled, 2)",
+            "type": "decimal"
+          }
+        },
+        {
+          "id": "quantityexpected",
+          "name": "Quantity Expected",
+          "processingDescription": {
+            "expression": "round(quantityexpected, 2)",
+            "type": "decimal"
+          }
+        },
+        {
+          "id": "quantityremaining",
+          "name": "Quantity Remaining",
+          "processingDescription": {
+            "expression": "round(quantityremaining, 2)",
+            "type": "decimal"
+          }
+        },
+        {
+          "id": "vendorid",
+          "name": "Vendor",
+          "processingDescription": {
+            "expression": "vendorid",
+            "type": "text"
+          }
+        },
+        {
+          "id": "receivinglocation",
+          "name": "Receiving Location",
+          "processingDescription": {
+            "expression": "receivinglocation",
+            "type": "text"
+          }
+        }
+      ]
+    }
+  },
+  "discrepancyTableDocument": {
+    "documentTypeId": "netsuite_discrepancy_table_document",
+    "isPlain": true,
+    "plainValues": [
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.poNumber",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.poNumber",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "supplierName",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.supplier",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      }
+    ],
+    "lineItems": {
+      "path": "items",
+      "headers": [
+        {
+          "id": "logged",
+          "name": "Logged date",
+          "processingDescription": {
+            "expression": "logged",
+            "type": "text"
+          }
+        },
+        {
+          "id": "month",
+          "name": "Month",
+          "processingDescription": {
+            "expression": "month",
+            "type": "text"
+          }
+        },
+        {
+          "id": "location",
+          "name": "Location",
+          "processingDescription": {
+            "expression": "location",
+            "type": "text"
+          }
+        },
+        {
+          "id": "documentNumber",
+          "name": "Document Number",
+          "processingDescription": {
+            "expression": "documentNumber",
+            "type": "text"
+          }
+        },
+        {
+          "id": "sku",
+          "name": "SKU",
+          "processingDescription": {
+            "expression": "sku",
+            "type": "text"
+          }
+        },
+        {
+          "id": "expectedQty",
+          "name": "Expected Quantity",
+          "processingDescription": {
+            "expression": "round(expectedQty, 2)",
+            "type": "decimal"
+          }
+        },
+        {
+          "id": "actualQty",
+          "name": "Actual Quantity",
+          "processingDescription": {
+            "expression": "round(actualQty, 2)",
+            "type": "decimal"
+          }
+        },
+        {
+          "id": "receiptingDiscrepancy",
+          "name": "Receipting discrepancy",
+          "processingDescription": {
+            "expression": "round(receiptingDiscrepancy, 2)",
+            "type": "decimal"
+          }
+        },
+        {
+          "id": "overOrShort",
+          "name": "Over or Short",
+          "processingDescription": {
+            "expression": "overOrShort",
+            "type": "text"
+          }
+        }
+      ]
+    }
+  },
+  "expenseReportDocument": {
+    "documentTypeId": "netsuite_expense_report_document",
+    "isPlain": true,
+    "plainValues": [
+      {
+        "ruleType": "inline",
+        "resultName": "userDocumentTypeId",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.userDocumentTypeId",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "invoiceNumber",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.documentNumber",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "invoiceDateEpoch",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.documentDate",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.createdDate",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.createdDate",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "supplierName",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.supplier",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "currencyCode",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.currencyCode",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.exchangeRate",
+        "resultType": "decimal",
+        "defaultValue": "",
+        "expression": "importedData.exchangeRate",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.purpose",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.purpose",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.subsidiary",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.subsidiary",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.budgetOwner",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.budgetOwner",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.itEndorseEmployee",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.itEndorse",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.facilityServiceEmployee",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.facilityServiceEndrse",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.level1Approver",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.level1Approver",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+      {
+        "ruleType": "inline",
+        "resultName": "otherFields.level2Approver",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.level2Approver",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      }
+    ],
+    "lineItems": {
+      "path": "items",
+      "headers": [
+        {
+          "id": "date",
+          "name": "Date",
+          "processingDescription": {
+            "expression": "expenseLineDate",
+            "type": "text"
+          }
+        },
+        {
+          "id": "category",
+          "name": "Category",
+          "processingDescription": {
+            "expression": "category_display",
+            "type": "text"
+          }
+        },
+        {
+          "id": "expenseAccount",
+          "name": "Expense Account",
+          "processingDescription": {
+            "expression": "expenseaccount_display",
+            "type": "text"
+          }
+        },
+        {
+          "id": "memo",
+          "name": "Memo",
+          "processingDescription": {
+            "expression": "memo",
+            "type": "text"
+          }
+        },
+
+        {
+          "id": "foreignAmount",
+          "name": "Foreign Amount",
+          "processingDescription": {
+            "expression": "round(foreignamount, 2)",
+            "type": "decimal"
+          }
+        },
+        {
+          "id": "exchangeRate",
+          "name": "Exchange Rate",
+          "processingDescription": {
+            "expression": "exchangerate",
+            "type": "text"
+          }
+        },
+        {
+          "id": "currency",
+          "name": "Currency",
+          "processingDescription": {
+            "expression": "lineCurrencyCode",
+            "type": "text"
+          }
+        },
+        {
+          "id": "amount",
+          "name": "Amount",
+          "processingDescription": {
+            "expression": "round(amount, 2)",
+            "type": "decimal"
+          }
+        },
+        {
+          "id": "taxCode",
+          "name": "Tax Code",
+          "processingDescription": {
+            "expression": "taxCodeName",
+            "type": "text"
+          }
+        },
+        {
+          "id": "taxRate",
+          "name": "Tax Rate",
+          "processingDescription": {
+            "expression": "taxrate1",
+            "type": "decimal"
+          }
+        },
+        {
+          "id": "taxAmount",
+          "name": "Tax Amount",
+          "processingDescription": {
+            "expression": "tax1amt",
+            "type": "decimal"
+          }
+        },
+        {
+          "id": "grossAmount",
+          "name": "Gross Amount",
+          "processingDescription": {
+            "expression": "round(grossamt, 2)",
+            "type": "decimal"
+          }
+        },
+        {
+          "id": "department",
+          "name": "Department",
+          "processingDescription": {
+            "expression": "departmentName",
+            "type": "text"
+          }
+        },
+        {
+          "id": "fund",
+          "name": "Fund",
+          "processingDescription": {
+            "expression": "fundName",
+            "type": "text"
+          }
+        },
+        {
+          "id": "moe",
+          "name": "Moe",
+          "processingDescription": {
+            "expression": "moeName",
+            "type": "text"
+          }
+        },
+        {
+          "id": "fundType",
+          "name": "Fund Type",
+          "processingDescription": {
+            "expression": "fundTypeName",
+            "type": "text"
+          }
+        },
+        {
+          "id": "events",
+          "name": "Events",
+          "processingDescription": {
+            "expression": "eventsName",
+            "type": "text"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,330 @@
+{
+  "documentTypeId": "netsuite_expense_report_document",
+  "isPlain": true,
+  "plainValues": [
+    {
+        "ruleType": "inline",
+        "resultName": "userDocumentTypeId",
+        "resultType": "text",
+        "defaultValue": "",
+        "expression": "importedData.userDocumentTypeId",
+        "statusExpression": "true",
+        "excludeFromErrors": true,
+        "severity": "info",
+        "meta": {
+          "documentProperty": true
+        }
+      },
+    {
+      "ruleType": "inline",
+      "resultName": "invoiceNumber",
+      "resultType": "text",
+      "defaultValue": "",
+      "expression": "importedData.documentNumber",
+      "statusExpression": "true",
+      "excludeFromErrors": true,
+      "severity": "info",
+      "meta": {
+        "documentProperty": true
+      }
+    },
+    {
+      "ruleType": "inline",
+      "resultName": "invoiceDateEpoch",
+      "resultType": "text",
+      "defaultValue": "",
+      "expression": "importedData.documentDate",
+      "statusExpression": "true",
+      "excludeFromErrors": true,
+      "severity": "info",
+      "meta": {
+        "documentProperty": true
+      }
+    },
+    {
+      "ruleType": "inline",
+      "resultName": "otherFields.createdDate",
+      "resultType": "text",
+      "defaultValue": "",
+      "expression": "importedData.createdDate",
+      "statusExpression": "true",
+      "excludeFromErrors": true,
+      "severity": "info",
+      "meta": {
+        "documentProperty": true
+      }
+    },
+    {
+      "ruleType": "inline",
+      "resultName": "supplierName",
+      "resultType": "text",
+      "defaultValue": "",
+      "expression": "importedData.supplier",
+      "statusExpression": "true",
+      "excludeFromErrors": true,
+      "severity": "info",
+      "meta": {
+        "documentProperty": true
+      }
+    },
+    {
+      "ruleType": "inline",
+      "resultName": "currencyCode",
+      "resultType": "text",
+      "defaultValue": "",
+      "expression": "importedData.currencyCode",
+      "statusExpression": "true",
+      "excludeFromErrors": true,
+      "severity": "info",
+      "meta": {
+        "documentProperty": true
+      }
+    },
+    {
+      "ruleType": "inline",
+      "resultName": "otherFields.exchangeRate",
+      "resultType": "decimal",
+      "defaultValue": "",
+      "expression": "importedData.exchangeRate",
+      "statusExpression": "true",
+      "excludeFromErrors": true,
+      "severity": "info",
+      "meta": {
+        "documentProperty": true
+      }
+    },
+    {
+      "ruleType": "inline",
+      "resultName": "otherFields.purpose",
+      "resultType": "text",
+      "defaultValue": "",
+      "expression": "importedData.purpose",
+      "statusExpression": "true",
+      "excludeFromErrors": true,
+      "severity": "info",
+      "meta": {
+        "documentProperty": true
+      }
+    },
+    {
+      "ruleType": "inline",
+      "resultName": "otherFields.subsidiary",
+      "resultType": "text",
+      "defaultValue": "",
+      "expression": "importedData.subsidiary",
+      "statusExpression": "true",
+      "excludeFromErrors": true,
+      "severity": "info",
+      "meta": {
+        "documentProperty": true
+      }
+    },
+    {
+      "ruleType": "inline",
+      "resultName": "otherFields.budgetOwner",
+      "resultType": "text",
+      "defaultValue": "",
+      "expression": "importedData.budgetOwner",
+      "statusExpression": "true",
+      "excludeFromErrors": true,
+      "severity": "info",
+      "meta": {
+        "documentProperty": true
+      }
+    },
+    {
+      "ruleType": "inline",
+      "resultName": "otherFields.itEndorseEmployee",
+      "resultType": "text",
+      "defaultValue": "",
+      "expression": "importedData.itEndorse",
+      "statusExpression": "true",
+      "excludeFromErrors": true,
+      "severity": "info",
+      "meta": {
+        "documentProperty": true
+      }
+    },
+    {
+      "ruleType": "inline",
+      "resultName": "otherFields.facilityServiceEmployee",
+      "resultType": "text",
+      "defaultValue": "",
+      "expression": "importedData.facilityServiceEndrse",
+      "statusExpression": "true",
+      "excludeFromErrors": true,
+      "severity": "info",
+      "meta": {
+        "documentProperty": true
+      }
+    },
+    {
+      "ruleType": "inline",
+      "resultName": "otherFields.level1Approver",
+      "resultType": "text",
+      "defaultValue": "",
+      "expression": "importedData.level1Approver",
+      "statusExpression": "true",
+      "excludeFromErrors": true,
+      "severity": "info",
+      "meta": {
+        "documentProperty": true
+      }
+    },
+    {
+      "ruleType": "inline",
+      "resultName": "otherFields.level2Approver",
+      "resultType": "text",
+      "defaultValue": "",
+      "expression": "importedData.level2Approver",
+      "statusExpression": "true",
+      "excludeFromErrors": true,
+      "severity": "info",
+      "meta": {
+        "documentProperty": true
+      }
+    }
+  ],
+  "lineItems": {
+    "path": "items",
+    "headers": [
+      {
+        "id": "date",
+        "name": "Date",
+        "processingDescription": {
+          "expression": "expenseLineDate",
+          "type": "text"
+        }
+      },
+      {
+        "id": "category",
+        "name": "Category",
+        "processingDescription": {
+          "expression": "category_display",
+          "type": "text"
+        }
+      },
+      {
+        "id": "expenseAccount",
+        "name": "Expense Account",
+        "processingDescription": {
+          "expression": "expenseaccount_display",
+          "type": "text"
+        }
+      },
+      {
+        "id": "memo",
+        "name": "Memo",
+        "processingDescription": {
+          "expression": "memo",
+          "type": "text"
+        }
+      },
+
+      {
+        "id": "foreignAmount",
+        "name": "Foreign Amount",
+        "processingDescription": {
+          "expression": "round(foreignamount, 2)",
+          "type": "decimal"
+        }
+      },
+      {
+        "id": "exchangeRate",
+        "name": "Exchange Rate",
+        "processingDescription": {
+          "expression": "exchangerate",
+          "type": "text"
+        }
+      },
+      {
+        "id": "currency",
+        "name": "Currency",
+        "processingDescription": {
+          "expression": "lineCurrencyCode",
+          "type": "text"
+        }
+      },
+      {
+        "id": "amount",
+        "name": "Amount",
+        "processingDescription": {
+          "expression": "round(amount, 2)",
+          "type": "decimal"
+        }
+      },
+      {
+        "id": "taxCode",
+        "name": "Tax Code",
+        "processingDescription": {
+          "expression": "taxCodeName",
+          "type": "text"
+        }
+      },
+      {
+        "id": "taxRate",
+        "name": "Tax Rate",
+        "processingDescription": {
+            "expression": "taxrate1",
+            "type": "decimal"
+          }
+      },
+      {
+        "id": "taxAmount",
+        "name": "Tax Amount",
+        "processingDescription": {
+          "expression": "tax1amt",
+          "type": "decimal"
+        }
+      },
+      {
+        "id": "grossAmount",
+        "name": "Gross Amount",
+        "processingDescription": {
+          "expression": "round(grossamt, 2)",
+          "type": "decimal"
+        }
+      },
+      {
+        "id": "department",
+        "name": "Department",
+        "processingDescription": {
+          "expression": "departmentName",
+          "type": "text"
+        }
+      },
+      {
+        "id": "fund",
+        "name": "Fund",
+        "processingDescription": {
+          "expression": "fundName",
+          "type": "text"
+        }
+      },
+      {
+        "id": "moe",
+        "name": "Moe",
+        "processingDescription": {
+          "expression": "moeName",
+          "type": "text"
+        }
+      },
+      {
+        "id": "fundType",
+        "name": "Fund Type",
+        "processingDescription": {
+          "expression": "fundTypeName",
+          "type": "text"
+        }
+      },
+      {
+        "id": "events",
+        "name": "Events",
+        "processingDescription": {
+          "expression": "eventsName",
+          "type": "text"
+        }
+      }
+    ]
+  }
+}
