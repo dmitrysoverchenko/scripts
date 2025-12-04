@@ -10,7 +10,7 @@
  * @NModuleScope Public
  */
 
-define(["N/record", "N/log", 'N/file'], function (recordModule, log, file) {
+define(["N/record", "N/log", "N/file"], function (recordModule, log, file) {
   function post(request) {
     if (!request.function) {
       return { error: "No function specified" };
@@ -468,30 +468,43 @@ define(["N/record", "N/log", 'N/file'], function (recordModule, log, file) {
 
       fileObj = file.load({ id: fileID });
 
-      var expRecord = recordModule.load({
-        type: recordModule.Type.EXPENSE_REPORT,
-        id: request.recordId,
-        isDynamic: false,
-      });
-
-      var lineCount = expRecord.getLineCount({ sublistId: "expense" });
-
-      for (var i = 0; i < lineCount; i++) {
-        expRecord.setSublistValue({
-          sublistId: "expense",
-          fieldId: "custcol_2663_eft_file_format",
-          line: i,
-          value: fileID,
-        });
-      }
-
-      expRecord.save({ enableSourcing: false, ignoreMandatoryFields: true });
-
       var response = {};
       response["info"] = fileObj;
       response["content"] = fileObj.getContents();
       response["fileID"] = fileID;
 
+      if (request.setToLines) {
+        var expRecord = recordModule.load({
+          type: recordModule.Type.EXPENSE_REPORT,
+          id: request.recordId,
+          isDynamic: false,
+        });
+
+        var lineCount = expRecord.getLineCount({ sublistId: "expense" });
+
+        for (var i = 0; i < lineCount; i++) {
+          expRecord.setSublistValue({
+            sublistId: "expense",
+            fieldId: "expmediaitem",
+            line: i,
+            value: fileID,
+          });
+        }
+
+        expRecord.save({ enableSourcing: false, ignoreMandatoryFields: true });
+      } else {
+        var recdId = recordModule.attach({
+          record: {
+            type: "file",
+            id: fileID,
+          },
+          to: {
+            type: request.recordType,
+            id: request.recordId,
+          },
+        });
+        response["recordId"] = recdId;
+      }
       return response;
     } catch (e) {
       log.error({
