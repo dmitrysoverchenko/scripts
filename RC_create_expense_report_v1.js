@@ -423,27 +423,6 @@ define(["N/record", "N/log", "N/file"], function (recordModule, log, file) {
   }
 
   function fileCreate(request) {
-    if (typeof request.name === "undefined") {
-      return { error: "No name was specified." };
-    }
-    if (typeof request.fileType === "undefined") {
-      return { error: "No fileType was specified." };
-    }
-    if (typeof request.contents === "undefined") {
-      return { error: "No content was specified." };
-    }
-    if (typeof request.description === "undefined") {
-      return { error: "No description was specified." };
-    }
-    if (typeof request.encoding === "undefined") {
-      return { error: "No encoding was specified." };
-    }
-    if (typeof request.folderID === "undefined") {
-      return { error: "No folderID was specified." };
-    }
-    if (typeof request.isOnline === "undefined") {
-      return { error: "No isOnline was specified." };
-    }
     if (!request.recordId) {
       return { error: "Record id is required." };
     }
@@ -451,7 +430,118 @@ define(["N/record", "N/log", "N/file"], function (recordModule, log, file) {
       return { error: "Record type is required." };
     }
 
+    var isBatchMode =
+      request.setToLines === true &&
+      request.useBatch === true &&
+      Array.isArray(request.content);
+
     try {
+      /**
+       * ======================================================
+       *  BATCH MODE — multiple files → specific expense lines
+       * ======================================================
+       */
+      if (isBatchMode) {
+        if (
+          typeof request.fileType === "undefined" ||
+          typeof request.encoding === "undefined" ||
+          typeof request.folderID === "undefined" ||
+          typeof request.isOnline === "undefined"
+        ) {
+          return { error: "Missing file parameters for batch mode" };
+        }
+
+        var expRecord = recordModule.load({
+          type: recordModule.Type.EXPENSE_REPORT,
+          id: request.recordId,
+          isDynamic: false,
+        });
+
+        var lineCount = expRecord.getLineCount({ sublistId: "expense" });
+        var createdFiles = [];
+
+        request.content.forEach(function (item) {
+          if (
+            !item ||
+            !item.contents ||
+            !item.name ||
+            !Array.isArray(item.lineIndexes)
+          ) {
+            return;
+          }
+
+          // ---- CREATE FILE
+          var fileObj = file.create({
+            name: item.name,
+            fileType: request.fileType,
+            contents: item.contents,
+            encoding: request.encoding,
+            folder: request.folderID,
+            isOnline: request.isOnline,
+          });
+
+          var fileID = fileObj.save();
+
+          // ---- SET FILE TO SPECIFIC LINES
+          item.lineIndexes.forEach(function (lineIndex) {
+            if (lineIndex >= 0 && lineIndex < lineCount) {
+              expRecord.setSublistValue({
+                sublistId: "expense",
+                fieldId: "expmediaitem",
+                line: lineIndex,
+                value: fileID,
+              });
+            }
+          });
+
+          createdFiles.push({
+            fileId: fileID,
+            name: item.name,
+            lineIndexes: item.lineIndexes,
+            originalDocumentId: item.originalDocumentId || null,
+          });
+        });
+
+        expRecord.save({
+          enableSourcing: false,
+          ignoreMandatoryFields: true,
+        });
+
+        return {
+          success: true,
+          mode: "batch-lines",
+          recordId: request.recordId,
+          files: createdFiles,
+        };
+      }
+
+      /**
+       * ======================================
+       *  LEGACY MODE — single file logic
+       * ======================================
+       */
+      if (typeof request.name === "undefined") {
+        return { error: "No name was specified." };
+      }
+      if (typeof request.fileType === "undefined") {
+        return { error: "No fileType was specified." };
+      }
+      if (typeof request.contents === "undefined") {
+        return { error: "No content was specified." };
+      }
+      if (typeof request.description === "undefined") {
+        return { error: "No description was specified." };
+      }
+      if (typeof request.encoding === "undefined") {
+        return { error: "No encoding was specified." };
+      }
+      if (typeof request.folderID === "undefined") {
+        return { error: "No folderID was specified." };
+      }
+      if (typeof request.isOnline === "undefined") {
+        return { error: "No isOnline was specified." };
+      }
+
       var fileObj = file.create({
         name: request.name,
         fileType: request.fileType,
@@ -468,22 +558,25 @@ define(["N/record", "N/log", "N/file"], function (recordModule, log, file) {
 
       fileObj = file.load({ id: fileID });
 
-      var response = {};
-      response["info"] = fileObj;
-      response["content"] = fileObj.getContents();
-      response["fileID"] = fileID;
+      var response = {
+        info: fileObj,
+        content: fileObj.getContents(),
+        fileID: fileID,
+      };
 
-      if (request.setToLines) {
-        var expRecord = recordModule.load({
+      if (request.setToLines === true) {
+        var expRecordLegacy = recordModule.load({
           type: recordModule.Type.EXPENSE_REPORT,
           id: request.recordId,
           isDynamic: false,
         });
 
-        var lineCount = expRecord.getLineCount({ sublistId: "expense" });
+        var legacyLineCount = expRecordLegacy.getLineCount({
+          sublistId: "expense",
+        });
 
-        for (var i = 0; i < lineCount; i++) {
-          expRecord.setSublistValue({
+        for (var i = 0; i < legacyLineCount; i++) {
+          expRecordLegacy.setSublistValue({
             sublistId: "expense",
             fieldId: "expmediaitem",
             line: i,
@@ -491,7 +584,10 @@ define(["N/record", "N/log", "N/file"], function (recordModule, log, file) {
           });
         }
 
-        expRecord.save({ enableSourcing: false, ignoreMandatoryFields: true });
+        expRecordLegacy.save({
+          enableSourcing: false,
+          ignoreMandatoryFields: true,
+        });
       } else {
         var recdId = recordModule.attach({
           record: {
@@ -503,8 +599,10 @@ define(["N/record", "N/log", "N/file"], function (recordModule, log, file) {
             id: request.recordId,
           },
         });
-        response["recordId"] = recdId;
+
+        response.recordId = recdId;
       }
+
       return response;
     } catch (e) {
       log.error({
