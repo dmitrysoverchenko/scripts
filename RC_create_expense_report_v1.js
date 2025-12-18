@@ -575,13 +575,23 @@ define(["N/record", "N/log", "N/file"], function (recordModule, log, file) {
           sublistId: "expense",
         });
 
-        for (var i = 0; i < legacyLineCount; i++) {
-          expRecordLegacy.setSublistValue({
-            sublistId: "expense",
-            fieldId: "expmediaitem",
-            line: i,
-            value: fileID,
-          });
+        for (var ii = 0; ii < legacyLineCount; ii++) {
+          var found = false;
+          for (var jj = 0; jj < request.lineIndexArray.length; jj++) {
+            if (request.lineIndexArray[jj] === ii) {
+              found = true;
+              break;
+            }
+          }
+
+          if (found) {
+            expRecordLegacy.setSublistValue({
+              sublistId: "expense",
+              fieldId: "expmediaitem",
+              line: ii,
+              value: fileID,
+            });
+          }
         }
 
         expRecordLegacy.save({
