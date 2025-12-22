@@ -271,6 +271,14 @@ define(["N/record", "N/log", "N/file"], function (recordModule, log, file) {
         });
       }
 
+      // Document URL (Hyperlink)
+      if (request.custbody_rc_fileaiurl) {
+        expRec.setValue({
+          fieldId: "custbody_rc_fileaiurl",
+          value: request.custbody_rc_fileaiurl,
+        });
+      }
+
       // SUBLIST LINES
       var items = request.expense.items;
 
